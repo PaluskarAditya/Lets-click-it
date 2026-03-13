@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { auth } from "../../lib/firebase";
+import Cookies from "js-cookie";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
@@ -34,12 +37,12 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
       router.push("/home");
     } catch (err) {
-      setError("Google sign-in failed. Try again.");
+      setError("Google sign-in failed");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleFacebookLogin = async () => {

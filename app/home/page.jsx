@@ -1,21 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-
-const user = {
-  name: "Rahul",
-  balance: "₹248.50",
-  todayEarned: "₹18.00",
-  tasksCompleted: 142,
-  pendingPayout: "₹100.00",
-};
-
-const walletStats = [
-  { value: user.balance, label: "Wallet Balance" },
-  { value: user.todayEarned, label: "Earned Today" },
-  { value: user.tasksCompleted, label: "Tasks Done" },
-  { value: user.pendingPayout, label: "Pending Payout" },
-];
+import React, { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
+import { auth } from "../../lib/firebase";
+import { getRedirectResult, GoogleAuthProvider } from "firebase/auth";
 
 const tasks = [
   {
@@ -203,6 +192,42 @@ const typeColors = {
 };
 
 export default function Dashboard() {
+  const router = useRouter();
+
+  useEffect(() => {
+    getRedirectResult(auth).then((result) => {
+      if (result.user) {
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+
+        const token = credential.accessToken;
+
+        Cookies.set("__Secure_token", token);
+        Cookies.set("__Secure_data", JSON.stringify(result.user));
+
+        router.push("/home");
+      }
+    });
+  }, []);
+
+  const raw = Cookies.get("__Secure_data");
+  const fetched_user = raw !== undefined && JSON.parse(raw);
+  console.log(fetched_user.photoURL);
+
+  const user = {
+    name: fetched_user.displayName,
+    balance: "₹248.50",
+    todayEarned: "₹18.00",
+    tasksCompleted: 142,
+    pendingPayout: "₹100.00",
+  };
+
+  const walletStats = [
+    { value: user.balance, label: "Wallet Balance" },
+    { value: user.todayEarned, label: "Earned Today" },
+    { value: user.tasksCompleted, label: "Tasks Done" },
+    { value: user.pendingPayout, label: "Pending Payout" },
+  ];
+
   const [activeTab, setActiveTab] = useState("All");
   const tabs = ["All", "Click", "Video", "Survey", "Campaign"];
   const filtered =
@@ -226,7 +251,13 @@ export default function Dashboard() {
             History
           </a>
           <div style={styles.navUser}>
-            <span style={styles.navAvatar}>{user.name[0]}</span>
+            <span style={styles.navAvatar}>
+              <img
+                style={styles.navAvatar}
+                src={fetched_user.photoURL}
+                alt="User Profile Picture"
+              />
+            </span>
             <span style={styles.navName}>{user.name}</span>
           </div>
         </div>
