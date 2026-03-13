@@ -9,10 +9,36 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
 } from "firebase/auth";
+import Link from "next/link";
 
 const tasks = [
   {
     id: 1,
+    type: "Click",
+    title: "Start Clicking",
+    brand: "Lets Click It",
+    reward: "₹1.00",
+    time: "Unlimited",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        viewBox="0 0 24 24"
+      >
+        <path d="M15 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+        <path
+          d="M2 13s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+    pageLink: "/tasks/clicker",
+  },
+  {
+    id: 2,
     type: "Click",
     title: "Visit Sponsor Page",
     brand: "TechBrand India",
@@ -36,7 +62,7 @@ const tasks = [
     ),
   },
   {
-    id: 2,
+    id: 3,
     type: "Video",
     title: "Watch Product Ad",
     brand: "QuickMart",
@@ -57,7 +83,7 @@ const tasks = [
     ),
   },
   {
-    id: 3,
+    id: 4,
     type: "Survey",
     title: "Product Feedback Form",
     brand: "ConsumerInsights",
@@ -81,7 +107,7 @@ const tasks = [
     ),
   },
   {
-    id: 4,
+    id: 5,
     type: "Campaign",
     title: "Follow & Share Campaign",
     brand: "StyleUp",
@@ -111,7 +137,7 @@ const tasks = [
     ),
   },
   {
-    id: 5,
+    id: 6,
     type: "Click",
     title: "Visit & Explore Store",
     brand: "DealZone",
@@ -135,7 +161,7 @@ const tasks = [
     ),
   },
   {
-    id: 6,
+    id: 7,
     type: "Video",
     title: "Watch App Demo",
     brand: "FinPay",
@@ -310,7 +336,10 @@ export default function Dashboard() {
         <div style={styles.topRow}>
           <div className="fade-up">
             <p style={styles.welcomeSub}>Good morning,</p>
-            <h1 style={styles.welcomeTitle} className="flex justify-center items-center">
+            <h1
+              style={styles.welcomeTitle}
+              className="flex justify-center items-center"
+            >
               {user.name === null ? (
                 <div className="w-20 inline-block rounded-lg h-7.5 bg-gray-200 animate-pulse"></div>
               ) : (
@@ -405,7 +434,9 @@ export default function Dashboard() {
                     </div>
                     <div style={styles.taskRight}>
                       <span style={styles.taskReward}>{task.reward}</span>
-                      <button style={styles.startBtn}>Start</button>
+                      <Link href={task.pageLink ? task.pageLink : "/"}>
+                        <button style={styles.startBtn}>Start</button>
+                      </Link>
                     </div>
                   </div>
                 );
