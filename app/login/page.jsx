@@ -9,6 +9,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   onAuthStateChanged,
+  getRedirectResult,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
@@ -19,6 +20,27 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const provider = new GoogleAuthProvider();
+
+  useEffect(() => {
+    const getData = async () => {
+      const res = await getRedirectResult(auth);
+      console.log("getRedirectResult():", res);
+    };
+
+    getData();
+  }, []);
+
+  useEffect(() => {
+    if (auth.onAuthStateChanged) {
+      auth.onAuthStateChanged((user) => {
+        if (user) {
+          router.push("/home");
+        }
+
+        // console.log(user);
+      });
+    }
+  }, [auth]);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
@@ -38,7 +60,6 @@ export default function LoginPage() {
     setError("");
     try {
       await signInWithRedirect(auth, provider);
-      router.push("/home");
     } catch (err) {
       setError("Google sign-in failed");
       setLoading(false);

@@ -4,7 +4,11 @@ import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { auth } from "../../lib/firebase";
-import { getRedirectResult, GoogleAuthProvider } from "firebase/auth";
+import {
+  getRedirectResult,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+} from "firebase/auth";
 
 const tasks = [
   {
@@ -194,32 +198,62 @@ const typeColors = {
 export default function Dashboard() {
   const router = useRouter();
 
-  useEffect(() => {
-    getRedirectResult(auth).then((result) => {
-      if (result.user) {
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-
-        const token = credential.accessToken;
-
-        Cookies.set("__Secure_token", token);
-        Cookies.set("__Secure_data", JSON.stringify(result.user));
-
-        router.push("/home");
-      }
-    });
-  }, []);
-
-  const raw = Cookies.get("__Secure_data");
-  const fetched_user = raw !== undefined && JSON.parse(raw);
-  console.log(fetched_user.photoURL);
-
-  const user = {
-    name: fetched_user.displayName,
+  const [user, setUser] = useState({
+    name: null,
     balance: "₹248.50",
     todayEarned: "₹18.00",
     tasksCompleted: 142,
     pendingPayout: "₹100.00",
-  };
+    photoURL: null,
+  });
+
+  // useEffect(() => {
+  //   const getData = async () => {
+  //     const res = await getRedirectResult(auth);
+  //     console.log("getRedirectResult():", res);
+  //   };
+
+  //   getData();
+  // }, []);
+
+  // useEffect(() => {
+  //   getRedirectResult(auth).then((result) => {
+  //     console.log(result);
+
+  //     if (result.user) {
+  //       const credential = GoogleAuthProvider.credentialFromResult(result);
+
+  //       const token = credential.accessToken;
+  //       Cookies.get("__Secure_data", JSON.stringify(result.user));
+
+  //       if (token) {
+  //         Cookies.set("__Secure_token", token);
+  //       }
+  //     }
+  //   });
+  // }, []);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (data) => {
+      if (!data) {
+        router.push("/login");
+        return;
+      }
+
+      Cookies.set("__Secure_data", JSON.stringify(data.providerData[0] || {}));
+
+      setUser((prev) => ({
+        ...prev,
+        name: data.displayName,
+        photoURL: data.photoURL,
+      }));
+
+      const token = await data.getIdToken();
+      Cookies.set("__Secure_token", token);
+    });
+
+    return () => unsub();
+  }, []);
 
   const walletStats = [
     { value: user.balance, label: "Wallet Balance" },
@@ -251,14 +285,22 @@ export default function Dashboard() {
             History
           </a>
           <div style={styles.navUser}>
-            <span style={styles.navAvatar}>
-              <img
-                style={styles.navAvatar}
-                src={fetched_user.photoURL}
-                alt="User Profile Picture"
-              />
-            </span>
-            <span style={styles.navName}>{user.name}</span>
+            {user.photoURL === null ? (
+              <div className="h-7.5 w-7.5 rounded-full bg-gray-200 animate-pulse"></div>
+            ) : (
+              <span style={styles.navAvatar}>
+                <img
+                  style={styles.navAvatar}
+                  src={user.photoURL}
+                  alt="User Profile Picture"
+                />
+              </span>
+            )}
+            {user.name === null ? (
+              <div className="w-20 rounded-lg h-7.5 bg-gray-200 animate-pulse"></div>
+            ) : (
+              <span style={styles.navName}>{user.name}</span>
+            )}
           </div>
         </div>
       </nav>
@@ -268,7 +310,14 @@ export default function Dashboard() {
         <div style={styles.topRow}>
           <div className="fade-up">
             <p style={styles.welcomeSub}>Good morning,</p>
-            <h1 style={styles.welcomeTitle}>{user.name} 👋</h1>
+            <h1 style={styles.welcomeTitle} className="flex justify-center items-center">
+              {user.name === null ? (
+                <div className="w-20 inline-block rounded-lg h-7.5 bg-gray-200 animate-pulse"></div>
+              ) : (
+                <span className="inline">{user.name}</span>
+              )}{" "}
+              👋
+            </h1>
           </div>
           <a href="#" style={styles.withdrawBtn} className="fade-up">
             Withdraw earnings →
